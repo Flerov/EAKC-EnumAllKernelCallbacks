@@ -12,4 +12,6 @@ We will also disable EDR by flipping _TRACE_ENABLE_INFO bit to 0x0. </br></br>
 
 Have fun :)
 Maybe it will help you or you have ideas to improve this let me know!
-I will try to add WinDbg Pictures to assist those who want to learn...
+I will try to add WinDbg Pictures to assist those who want to learn... </br>
+Most Offsets are Hardcoded so make sure to check them before you run. I tested this on Windows10 Build: 19041 and 19044</br>
+Also of course load driver before and give it the device name: dbutil_2_3
