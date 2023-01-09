@@ -1,17 +1,10 @@
-# DisableEdrAndKernelCallbacks
-Disable Edr by flipping _TRACE_ENABLE_INFO Bit and all active Kernel Callbacks by modifying undocumented _CALLBACKS_LIST_ENTRY </br></br>
+# EnumerateAllKernelCallbacks
+What? > </br>
+List all registered "Process Creation" / "Load Image" / "Registry R/W" - Callbacks.</br>
+And Iterate over all Object Types. If a Type supports Callbacks list all of its Procedures. Which lets you easily hook them.</br>
+How? > </br>
+By abusing the vulnerable dbutil_2_3.sys driver we get arbitrary read/write primitives in the kernel. </br>
+This Project is free of hardcoded Offsets (x64). It will work on every Windows. </br>
+As an extra the programm will also resolve the ETWTrace-Address. You can just flipp the bit at the given ETWStatus-Address to disable tracing. </br></br>
 
-Reused Code from these Projects: (big Thanks you made everything alot easier to understand / apply) </br>
-https://github.com/mzakocs/CVE-2021-21551-POC </br>
-https://github.com/wavestone-cdt/EDRSandblast </br>
-The FindDriver - Function is also reused code but I couldn't find the project, I will add when I can remember :) </br></br>
-
-We will iterate over all _OBJECT_TYPES and look at the CallbacksList, since it is just a demonstration the code will only take one _CALLBACKS_LIST_ENTRY but this should be no problem for you to enhance the code to iterate through the whole _LIST_ENTRY struct ;) </br>
-When we see that the Callback ist active, we disable it.
-We will also disable EDR by flipping _TRACE_ENABLE_INFO bit to 0x0. </br></br>
-
-Have fun :)
-Maybe it will help you or you have ideas to improve this let me know!
-I will try to add WinDbg Pictures to assist those who want to learn... </br>
-Most Offsets are Hardcoded so make sure to check them before you run. I tested this on Windows10 Build: 19041 and 19044</br>
-Also of course load driver before and give it the device name: dbutil_2_3
+Have fun :) and make sure not to forget to load the driver first. Works also with manual mapping.
