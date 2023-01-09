@@ -1,11 +1,11 @@
 # EnumerateAllKernelCallbacks
 What? > </br>
 List all registered "Process Creation" / "Load Image" / "Registry R/W" - Callbacks.</br>
-And Iterate over all Object Types. If a Type supports Callbacks list all of its Procedures. Which lets you easily hook them.</br>
+And Iterate over all Object Types. If a Type supports Callbacks list all of its Procedures. Which lets you easily hook them.</br></br>
 How? > </br>
 By abusing the vulnerable dbutil_2_3.sys driver we get arbitrary read/write primitives in the kernel. </br>
 This Project is free of hardcoded Offsets (x64). It will work on every Windows. </br>
-As an extra the programm will also resolve the ETWTrace-Address. You can just flipp the bit at the given ETWStatus-Address to disable tracing.
+As an extra the programm will also resolve the ETWTrace-Address. You can just flipp the bit at the given ETWStatus-Address to disable tracing.</br>
 ![alt text](https://github.com/Flerov/EAKC-EnumAllKernelCallbacks/blob/main/shot.png?raw=true)
 </br></br>
 
